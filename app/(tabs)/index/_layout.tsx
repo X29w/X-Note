@@ -6,7 +6,14 @@ interface LayoutProps {}
 const Layout: FC<LayoutProps> = () => {
   return (
     <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="index"
+        options={{
+          title: "X-Note",
+          headerLargeTitle: true,
+          headerBlurEffect: "regular",
+        }}
+      />
     </Stack>
   );
 };
