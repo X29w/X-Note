@@ -1,38 +1,28 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
-import { useFonts } from "expo-font";
-import { Stack, useRouter } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { FC, Suspense, useEffect, useState } from "react";
-import "react-native-reanimated";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import * as FileSystem from "expo-file-system";
-import { Asset } from "expo-asset";
-import { catchError } from "@/utils/common";
-import { SQLiteProvider, useSQLiteContext } from "expo-sqlite";
-import { ActivityIndicator, Text, View } from "react-native";
+import Loading from "@/components/common/Loading";
+import ConditionalRender from "@/components/config/ConditionalRender";
 import {
   DATABASE_FILE_PATH,
   DATABASE_NAME,
   DATABASE_URI,
 } from "@/constant/config";
+import { catchError } from "@/utils/common";
+import * as FileSystem from "expo-file-system";
+import { useFonts } from "expo-font";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { SQLiteProvider } from "expo-sqlite";
+import { FC, Suspense, useEffect, useState } from "react";
+import "react-native-reanimated";
 
 SplashScreen.preventAutoHideAsync();
 
 const RootLayout: FC<never> = () => {
   const [dbLoaded, setDbLoaded] = useState<boolean>(false);
-
-  const colorScheme = useColorScheme();
-  
-  const router = useRouter();
-
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
+  //#region 加载数据库
   const loadDataBase = async () => {
     const fileInfo = await FileSystem.getInfoAsync(DATABASE_FILE_PATH);
     if (fileInfo.exists) {
@@ -45,52 +35,34 @@ const RootLayout: FC<never> = () => {
       await FileSystem.downloadAsync(DATABASE_URI, DATABASE_FILE_PATH);
     }
   };
+  //#endregion
 
+  //#region 初始化数据库
   const initDataBase = async () => {
-    const [error, result] = await catchError(loadDataBase());
+    const [error] = await catchError(loadDataBase());
     error ? console.log(error) : setDbLoaded(true);
   };
+  //#endregion
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
+    loaded && SplashScreen.hideAsync();
   }, [loaded]);
 
   useEffect(() => {
     initDataBase();
   }, []);
 
-  if (!loaded) {
-    return null;
-  }
-
-  if (!dbLoaded)
-    return (
-      <View>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>loading....</Text>
-      </View>
-    );
-
   return (
-    <Suspense
-      fallback={
-        <View style={{ flex: 1 }}>
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text>loading....</Text>
-        </View>
-      }
-    >
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <ConditionalRender condition={dbLoaded || loaded} fallback={<Loading />}>
+      <Suspense fallback={<Loading />}>
         <SQLiteProvider databaseName={DATABASE_NAME} useSuspense>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
           </Stack>
         </SQLiteProvider>
-      </ThemeProvider>
-    </Suspense>
+      </Suspense>
+    </ConditionalRender>
   );
 };
 
