@@ -2,11 +2,20 @@ import Card from "@/components/common/Card";
 import SegmentedControl from "@react-native-segmented-control/segmented-control";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState, type FC } from "react";
-import { Button, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Button,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import AddButton from "./mission-add-add-button";
 import ConditionalRender from "@/components/config/ConditionalRender";
 import DataView from "@/components/config/DataView";
 import dayjs from "dayjs";
+import CustomButton from "@/components/common/CustomButton";
 
 interface AddMissionCardProps {
   onFinish: (missions: Omit<MMission.IMission, "id">) => Awaited<void>;
@@ -20,7 +29,14 @@ const AddMissionCard: FC<AddMissionCardProps> = ({ onFinish }) => {
   const [missionName, setMissionName] = useState<string>(""); // 任务名称
   const [description, setDescription] = useState<string>(""); // 任务描述
   const [categoryId, setCategoryId] = useState<number>(1); // 任务分类ID
+  const [dateLimit, setDateLimit] = useState<OneOf<[0, 1, 2]>>(0); // 任务日期限制
   const db = useSQLiteContext();
+
+  const expiredTimeMap = new Map<OneOf<[0, 1, 2]>, number>([
+    [0, dayjs().endOf("day").valueOf()],
+    [1, dayjs().add(7, "day").endOf("day").valueOf()],
+    [2, dayjs("9999-12-31").valueOf()],
+  ]);
 
   const handleCancel = () => {
     setMissionName("");
@@ -38,6 +54,7 @@ const AddMissionCard: FC<AddMissionCardProps> = ({ onFinish }) => {
       status: "Processing",
       emoji: "1f600",
       date: dayjs().valueOf(),
+      expiredTime: expiredTimeMap.get(dateLimit)!,
     };
 
     onFinish(data);
@@ -74,6 +91,16 @@ const AddMissionCard: FC<AddMissionCardProps> = ({ onFinish }) => {
             style={{ marginBottom: 15 }}
             onChangeText={setDescription}
           />
+          <SegmentedControl
+            values={["Today", "A Week", "Indefinite"]}
+            style={{ marginVertical: 15 }}
+            selectedIndex={dateLimit}
+            onChange={(event) => {
+              setDateLimit(
+                event.nativeEvent.selectedSegmentIndex as OneOf<[0, 1, 2]>
+              );
+            }}
+          />
           <Text style={{ marginBottom: 6 }}>Select a Category</Text>
           <SegmentedControl
             values={["Exist", "Create"]}
@@ -83,6 +110,7 @@ const AddMissionCard: FC<AddMissionCardProps> = ({ onFinish }) => {
               setCurrentTab(event.nativeEvent.selectedSegmentIndex);
             }}
           />
+
           <DataView
             data={categories}
             keyExtractor={(item) => item.id}
@@ -121,12 +149,16 @@ const AddMissionCard: FC<AddMissionCardProps> = ({ onFinish }) => {
             marginTop: 15,
           }}
         >
-          <Button
+          <CustomButton
             title="Cancel"
-            color="red"
+            type="danger"
             onPress={() => setIsAddingTransaction(false)}
           />
-          <Button title="Save" onPress={handleSave} />
+          <CustomButton
+            title="Confirm"
+            onPress={handleSave}
+            disabled={!missionName}
+          />
         </View>
       </ConditionalRender>
     </View>

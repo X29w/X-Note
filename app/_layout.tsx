@@ -25,7 +25,7 @@ const RootLayout: FC<never> = () => {
   //#region 加载数据库
   const loadDataBase = async () => {
     const fileInfo = await FileSystem.getInfoAsync(DATABASE_FILE_PATH);
-    if (fileInfo.exists) {
+    if (!fileInfo.exists) {
       await FileSystem.makeDirectoryAsync(
         `${FileSystem.documentDirectory}SQLite`,
         {

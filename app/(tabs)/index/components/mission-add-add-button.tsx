@@ -23,7 +23,7 @@ const AddButton: FC<AddButtonProps> = ({ setIsAddingTransaction }) => {
     >
       <MaterialIcons name="add-circle-outline" size={24} color="#007BFF" />
       <Text style={{ fontWeight: "700", color: "#007BFF", marginLeft: 5 }}>
-        New Entry
+        New Mission
       </Text>
     </TouchableOpacity>
   );

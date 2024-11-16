@@ -25,7 +25,7 @@ const HomeScreen: FC<never> = () => {
       await db.withTransactionAsync(async () => {
         await db.runAsync(
           `
-      INSERT INTO Missions (category_id, name, date, description, status, emoji) VALUES (?, ?, ?, ?, ?, ?);
+      INSERT INTO Missions (category_id, name, date,  description, status, emoji, expiredTime) VALUES (?, ?, ?, ?, ?, ?, ?);
     `,
           [
             mission.category_id,
@@ -34,6 +34,7 @@ const HomeScreen: FC<never> = () => {
             mission.description,
             mission.status,
             mission.emoji,
+            mission.expiredTime,
           ]
         );
         await getData();
@@ -52,6 +53,8 @@ const HomeScreen: FC<never> = () => {
       )
     );
     error ? console.log(error) : setMissions(data);
+
+    console.log("data", data);
 
     const [error2, data2] = await catchError(
       db.getAllAsync<MCategory.ICategory>(`SELECT * FROM Categories;`)
