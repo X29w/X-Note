@@ -12,7 +12,9 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SQLiteProvider } from "expo-sqlite";
 import { FC, Suspense, useEffect, useState } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
+import Toast from "react-native-toast-message";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -55,12 +57,15 @@ const RootLayout: FC<never> = () => {
   return (
     <ConditionalRender condition={dbLoaded || loaded} fallback={<Loading />}>
       <Suspense fallback={<Loading />}>
-        <SQLiteProvider databaseName={DATABASE_NAME} useSuspense>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-        </SQLiteProvider>
+        <GestureHandlerRootView>
+          <SQLiteProvider databaseName={DATABASE_NAME} useSuspense>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+          </SQLiteProvider>
+          <Toast />
+        </GestureHandlerRootView>
       </Suspense>
     </ConditionalRender>
   );

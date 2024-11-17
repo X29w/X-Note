@@ -1,28 +1,59 @@
 import Card, { CardProps } from "@/components/common/Card";
+import SwipeableRow from "@/components/common/SwipeableRow";
 import DataView from "@/components/config/DataView";
-import { MaterialIcons } from "@expo/vector-icons";
+import { EMOJIS } from "@/constant/Emojis";
 import dayjs from "dayjs";
+import { useSQLiteContext } from "expo-sqlite";
 import LottieView from "lottie-react-native";
 import type { FC } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { AutoSizeText, ResizeTextMode } from "react-native-auto-size-text";
+import RightActions from "./mission-list-right-actions";
 
 interface MissionsListProps {
   categories: MCategory.ICategory[];
   missions: MMission.IMission[];
+  onDeleteMission: (id: number) => Awaited<void>;
+  onDoneMission: (id: number) => Awaited<void>;
 }
 
-const MissionsList: FC<MissionsListProps> = ({ missions = [], categories }) => {
+interface MissionMap {
+  cardType: CardProps["type"];
+  emoji: (typeof EMOJIS)[number]["key"];
+}
+
+const MissionsList: FC<MissionsListProps> = ({
+  missions = [],
+  categories,
+  onDeleteMission,
+  onDoneMission,
+}) => {
+  const db = useSQLiteContext();
+
   const cardTypeMap = new Map<
     MMission.IMission["status"],
-    (item: MMission.IMission) => CardProps["type"]
+    (item: MMission.IMission) => MissionMap
   >([
     [
       "Processing",
       (item) =>
-        dayjs(item.expiredTime).isAfter(dayjs()) ? "processing" : "danger",
+        dayjs(item.expiredTime).isAfter(dayjs())
+          ? {
+              cardType: "processing",
+              emoji: "1fae1",
+            }
+          : {
+              cardType: "danger",
+              emoji: "1f97a",
+            },
     ],
-    ["Done", () => "success"],
+    [
+      "Done",
+      () => ({
+        cardType: "success",
+        emoji: "1f973",
+      }),
+    ],
   ]);
 
   return (
@@ -30,52 +61,70 @@ const MissionsList: FC<MissionsListProps> = ({ missions = [], categories }) => {
       <DataView
         data={missions}
         keyExtractor={(item) => item.id}
-        itemRender={(item) => (
-          <TouchableOpacity activeOpacity={0.7}>
-            <Card type={cardTypeMap.get(item.status)!(item)}>
-              <AutoSizeText
-                fontSize={32}
-                mode={ResizeTextMode.max_lines}
-                numberOfLines={1}
-                style={[styles.amount, { maxWidth: "80%" }]}
-              >
-                {item.name}
-              </AutoSizeText>
-              <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                {item.description}
-              </Text>
-
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <View
-                  style={{ flexDirection: "row", gap: 6, alignItems: "center" }}
+        itemRender={(item, index) => (
+          <SwipeableRow
+            customRenderRightActions={(progress, _dragAnimatedValue, close) => (
+              <RightActions
+                close={close}
+                status={item.status}
+                progress={progress}
+                onDeleteMission={() => onDeleteMission(item.id)}
+                onDoneMission={() => onDoneMission(item.id)}
+              />
+            )}
+          >
+            <TouchableOpacity activeOpacity={0.7}>
+              <Card type={cardTypeMap.get(item.status)!(item).cardType}>
+                <AutoSizeText
+                  fontSize={32}
+                  mode={ResizeTextMode.max_lines}
+                  numberOfLines={1}
+                  style={[styles.amount, { maxWidth: "80%" }]}
                 >
-                  <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-                    {categories.find((c) => c.id === item.category_id)?.name}
-                  </Text>
-                  <LottieView
-                    source={{
-                      uri: `https://fonts.gstatic.com/s/e/notoemoji/latest/${item.emoji}/lottie.json`,
-                    }}
-                    autoPlay
-                    loop
-                    style={{
-                      width: 24,
-                      height: 24,
-                    }}
-                  />
-                </View>
-                <Text style={{ fontSize: 12, color: "gray" }}>
-                  {dayjs(item.date).format("DD/MM/YYYY HH:mm")}
+                  {item.name}
+                </AutoSizeText>
+                <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                  {item.description}
                 </Text>
-              </View>
-            </Card>
-          </TouchableOpacity>
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: 6,
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+                      {categories.find((c) => c.id === item.category_id)?.name}
+                    </Text>
+                    <LottieView
+                      source={{
+                        uri: `https://fonts.gstatic.com/s/e/notoemoji/latest/${
+                          cardTypeMap.get(item.status)!(item).emoji
+                        }/lottie.json`,
+                      }}
+                      autoPlay
+                      loop
+                      style={{
+                        width: 24,
+                        height: 24,
+                      }}
+                    />
+                  </View>
+                  <Text style={{ fontSize: 12, color: "gray" }}>
+                    {dayjs(item.date).format("DD/MM/YYYY HH:mm")}
+                  </Text>
+                </View>
+              </Card>
+            </TouchableOpacity>
+          </SwipeableRow>
         )}
       />
     </View>

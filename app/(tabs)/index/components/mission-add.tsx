@@ -11,11 +11,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import AddButton from "./mission-add-add-button";
+import AddButton from "./mission-add-button";
 import ConditionalRender from "@/components/config/ConditionalRender";
 import DataView from "@/components/config/DataView";
 import dayjs from "dayjs";
 import CustomButton from "@/components/common/CustomButton";
+import CreateCategory from "./create-tab-view";
+import ExitCategory from "./exist-tab-view";
 
 interface AddMissionCardProps {
   onFinish: (missions: Omit<MMission.IMission, "id">) => Awaited<void>;
@@ -25,7 +27,6 @@ const AddMissionCard: FC<AddMissionCardProps> = ({ onFinish }) => {
   const [isAddingTransaction, setIsAddingTransaction] =
     useState<boolean>(false);
   const [currentTab, setCurrentTab] = useState<number>(0); //当前选中的tab，0：已有任务分类，1：新建任务分类
-  const [categories, setCategories] = useState<MCategory.ICategory[]>([]); // 任务分类列表
   const [missionName, setMissionName] = useState<string>(""); // 任务名称
   const [description, setDescription] = useState<string>(""); // 任务描述
   const [categoryId, setCategoryId] = useState<number>(1); // 任务分类ID
@@ -52,7 +53,6 @@ const AddMissionCard: FC<AddMissionCardProps> = ({ onFinish }) => {
       description,
       category_id: categoryId,
       status: "Processing",
-      emoji: "1f600",
       date: dayjs().valueOf(),
       expiredTime: expiredTimeMap.get(dateLimit)!,
     };
@@ -61,18 +61,15 @@ const AddMissionCard: FC<AddMissionCardProps> = ({ onFinish }) => {
     handleCancel();
   };
 
-  //#region 获得任务分类列表
-  const getCategories = async () => {
-    const res = await db.getAllAsync<MCategory.ICategory>(
-      `SELECT * FROM Categories;`
-    );
-    setCategories(res);
+  //#region 创建任务分类
+  const handleCreateCategory = async (name: string) => {
+    await db.withTransactionAsync(async () => {
+      await db.runAsync("INSERT INTO Categories (name) VALUES (?)", [name]);
+
+      setCurrentTab(0);
+    });
   };
   //#endregion
-
-  useEffect(() => {
-    getCategories();
-  }, [currentTab]);
 
   return (
     <View style={{ marginBottom: 15 }}>
@@ -93,7 +90,7 @@ const AddMissionCard: FC<AddMissionCardProps> = ({ onFinish }) => {
           />
           <SegmentedControl
             values={["Today", "A Week", "Indefinite"]}
-            style={{ marginVertical: 15 }}
+            style={{ marginBottom: 15 }}
             selectedIndex={dateLimit}
             onChange={(event) => {
               setDateLimit(
@@ -110,37 +107,12 @@ const AddMissionCard: FC<AddMissionCardProps> = ({ onFinish }) => {
               setCurrentTab(event.nativeEvent.selectedSegmentIndex);
             }}
           />
-
-          <DataView
-            data={categories}
-            keyExtractor={(item) => item.id}
-            itemRender={(item) => (
-              <TouchableOpacity
-                onPress={() => setCategoryId(item.id)}
-                activeOpacity={0.6}
-                style={{
-                  height: 40,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor:
-                    item.id === categoryId ? "#007BFF20" : "#00000020",
-                  borderRadius: 15,
-                  marginBottom: 6,
-                }}
-              >
-                <Text
-                  style={{
-                    fontWeight: "700",
-                    color: item.id === categoryId ? "#007BFF" : "#000000",
-                    marginLeft: 5,
-                  }}
-                >
-                  {item.name}
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
+          <ConditionalRender
+            condition={currentTab === 0}
+            fallback={<CreateCategory onFinish={handleCreateCategory} />}
+          >
+            <ExitCategory onFinish={setCategoryId} />
+          </ConditionalRender>
         </Card>
         <View
           style={{

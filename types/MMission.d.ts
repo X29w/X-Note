@@ -7,6 +7,5 @@ declare module MMission {
     expiredTime: number;
     description: string;
     status: OneOf<["Processing", "Done"]>;
-    emoji: string;
   }
 }

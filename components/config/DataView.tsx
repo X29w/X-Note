@@ -3,7 +3,7 @@ import { View } from "react-native";
 
 interface DataViewProps<T> {
   data: T[];
-  itemRender: (item: T) => React.ReactNode;
+  itemRender: (item: T,index: number) => React.ReactNode;
   keyExtractor?: (item: T, index: number) => string | number;
 }
 
@@ -14,7 +14,7 @@ const DataView = <T,>({
 }: DataViewProps<T>): ReactNode =>
   data.map((item, index) => (
     <Fragment key={keyExtractor ? keyExtractor(item, index) : index}>
-      {itemRender(item)}
+      {itemRender(item,index)}
     </Fragment>
   ));
 

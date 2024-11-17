@@ -12,10 +12,27 @@ const HomeScreen: FC<never> = () => {
 
   //#region 删除任务
   const deleteMission = async (id: number) => {
-    await db.withTransactionAsync(async () => {
-      await db.runAsync(`DELETE FROM Missions WHERE id = ?;`, [id]);
-      await getData();
-    });
+    const [error] = await catchError(
+      db.withTransactionAsync(async () => {
+        await db.runAsync(`DELETE FROM Missions WHERE id = ?;`, [id]);
+        await getData();
+      })
+    );
+    error && console.log(error);
+  };
+  //#endregion
+
+  //#region 完成任务
+  const completeMission = async (id: number) => {
+    const [error] = await catchError(
+      db.withTransactionAsync(async () => {
+        await db.runAsync(`UPDATE Missions SET status = 'Done' WHERE id = ?;`, [
+          id,
+        ]);
+        await getData();
+      })
+    );
+    error && console.log(error);
   };
   //#endregion
 
@@ -25,7 +42,7 @@ const HomeScreen: FC<never> = () => {
       await db.withTransactionAsync(async () => {
         await db.runAsync(
           `
-      INSERT INTO Missions (category_id, name, date,  description, status, emoji, expiredTime) VALUES (?, ?, ?, ?, ?, ?, ?);
+      INSERT INTO Missions (category_id, name, date,  description, status, expiredTime) VALUES (?, ?, ?, ?, ?, ?);
     `,
           [
             mission.category_id,
@@ -33,7 +50,6 @@ const HomeScreen: FC<never> = () => {
             mission.date,
             mission.description,
             mission.status,
-            mission.emoji,
             mission.expiredTime,
           ]
         );
@@ -78,7 +94,12 @@ const HomeScreen: FC<never> = () => {
   return (
     <ScrollView style={{ paddingHorizontal: 20, paddingVertical: 15 }}>
       <AddMissionCard onFinish={(data) => insertMission(data)} />
-      <MissionsList categories={categories} missions={missions} />
+      <MissionsList
+        categories={categories}
+        missions={missions}
+        onDeleteMission={deleteMission}
+        onDoneMission={completeMission}
+      />
     </ScrollView>
   );
 };

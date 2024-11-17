@@ -9,10 +9,11 @@ import {
 
 interface CustomButtonProps {
   title: string;
-  onPress: () => void;
+  onPress?: () => void;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   type?: "danger" | "primary";
+  ghost?: boolean;
 }
 
 const CustomButton: FC<CustomButtonProps> = ({
@@ -21,21 +22,32 @@ const CustomButton: FC<CustomButtonProps> = ({
   disabled = false,
   style,
   type = "primary",
+  ghost = false,
 }) => {
+  const buttonStyle = [
+    styles.button,
+    ghost
+      ? styles.ghostButton
+      : type === "danger"
+      ? styles.dangerButton
+      : styles.primaryButton,
+    disabled && styles.disabledButton,
+    style,
+  ];
+
+  const textStyle = [
+    styles.text,
+    ghost ? (type === "danger" ? styles.dangerText : styles.primaryText) : {},
+    disabled && styles.disabledText,
+  ];
+
   return (
     <TouchableOpacity
       onPress={disabled ? undefined : onPress}
       activeOpacity={0.6}
-      style={[
-        styles.button,
-        type === "danger" ? styles.dangerButton : styles.primaryButton,
-        disabled && styles.disabledButton,
-        style,
-      ]}
+      style={buttonStyle}
     >
-      <Text style={[styles.text, disabled && styles.disabledText]}>
-        {title}
-      </Text>
+      <Text style={textStyle}>{title}</Text>
     </TouchableOpacity>
   );
 };
@@ -49,6 +61,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#f44336",
     borderRadius: 8,
   },
+  ghostButton: {
+    backgroundColor: "transparent", // 背景透明
+    borderWidth: 1,
+    borderColor: "#2196F3", // 默认为 primary 的颜色，若要做分类则稍后修改
+  },
   disabledButton: {
     backgroundColor: "#cccccc", // 禁用时的背景颜色
   },
@@ -60,6 +77,12 @@ const styles = StyleSheet.create({
   },
   text: {
     color: "#ffffff",
+  },
+  primaryText: {
+    color: "#2196F3", // primary 类型文字颜色
+  },
+  dangerText: {
+    color: "#f44336", // danger 类型文字颜色
   },
   disabledText: {
     color: "#888888", // 禁用时的文字颜色
