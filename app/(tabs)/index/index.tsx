@@ -4,21 +4,18 @@ import { FC, useEffect, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import AddMissionCard from "./components/mission-add";
 import MissionsList from "./components/mission-list";
+import { missionsFactory } from "@/database/factory";
 
 const HomeScreen: FC<never> = () => {
   const [categories, setCategories] = useState<MCategory.ICategory[]>([]);
   const [missions, setMissions] = useState<MMission.IMission[]>([]);
   const db = useSQLiteContext();
+  const missionController = missionsFactory();
 
   //#region 删除任务
   const deleteMission = async (id: number) => {
-    const [error] = await catchError(
-      db.withTransactionAsync(async () => {
-        await db.runAsync(`DELETE FROM Missions WHERE id = ?;`, [id]);
-        await getData();
-      })
-    );
-    error && console.log(error);
+    await missionController.delete(id);
+    await getData();
   };
   //#endregion
 
@@ -37,39 +34,16 @@ const HomeScreen: FC<never> = () => {
   //#endregion
 
   //#region 增加任务
-  const insertMission = async (mission: Omit<MMission.IMission, "id">) => {
-    try {
-      await db.withTransactionAsync(async () => {
-        await db.runAsync(
-          `
-      INSERT INTO Missions (category_id, name, date,  description, status, expiredTime) VALUES (?, ?, ?, ?, ?, ?);
-    `,
-          [
-            mission.category_id,
-            mission.name,
-            mission.date,
-            mission.description,
-            mission.status,
-            mission.expiredTime,
-          ]
-        );
-        await getData();
-      });
-    } catch (error) {
-      console.log("error:", error);
-    }
+  const insertMission = async (mission: MMission.Base) => {
+    await missionController.create(mission);
+    await getData();
   };
   //#endregion
 
   //#region 获取列表
   const getData = async () => {
-    const [error, data] = await catchError(
-      db.getAllAsync<MMission.IMission>(
-        `SELECT * FROM Missions ORDER BY date DESC LIMIT 30;`
-      )
-    );
-    error ? console.log(error) : setMissions(data);
-
+    const data = await missionController.findAll();
+    setMissions(data);
     console.log("data", data);
 
     const [error2, data2] = await catchError(
@@ -79,15 +53,9 @@ const HomeScreen: FC<never> = () => {
   };
   //#endregion
 
-  //#region 开启异步事务
-  const withTransAction = async () => {
-    await db.withTransactionAsync(async () => await getData());
-  };
-  //#endregion
-
   //#region 初始化数据加载
   useEffect(() => {
-    withTransAction();
+    getData();
   }, []);
   //#endregion
 

@@ -5,6 +5,7 @@ import {
   DATABASE_NAME,
   DATABASE_URI,
 } from "@/constant/config";
+import { DefaultSQLiteRepo } from "@/database/repository/DefaultSQLiteRepository";
 import { catchError } from "@/utils/common";
 import * as FileSystem from "expo-file-system";
 import { useFonts } from "expo-font";
@@ -51,7 +52,7 @@ const RootLayout: FC<never> = () => {
   }, [loaded]);
 
   useEffect(() => {
-    initDataBase();
+    // initDataBase();
   }, []);
 
   return (

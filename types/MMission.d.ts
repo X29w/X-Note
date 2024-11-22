@@ -1,6 +1,5 @@
 declare module MMission {
-  export interface IMission {
-    id: number;
+  export interface Base {
     name: string;
     category_id: number;
     date: number;
@@ -8,4 +7,7 @@ declare module MMission {
     description: string;
     status: OneOf<["Processing", "Done"]>;
   }
+
+  export type IMission = WithId<Base>;
+
 }
