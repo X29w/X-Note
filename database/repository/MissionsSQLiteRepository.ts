@@ -26,7 +26,7 @@ export class MissionsSQLiteRepository
 
   async findAll(): Promise<MMission.IMission[]> {
     return this.executeSelectQuery<MMission.IMission>(
-      "SELECT Missions.*, Categories.name AS category_name FROM Missions JOIN Categories ON Missions.category_id = Categories.id"
+      "SELECT Missions.*, Categories.name AS category_name FROM Missions JOIN Categories ON Missions.category_id = Categories.id ORDER BY CASE WHEN Missions.status = 'Processing' THEN 0 WHEN Missions.status = 'Done' THEN 1 END"
     );
   }
 

@@ -5,6 +5,8 @@ import * as SplashScreen from "expo-splash-screen";
 import { FC, Suspense, useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
+import * as Updates from "expo-updates";
+
 import Toast from "react-native-toast-message";
 
 SplashScreen.preventAutoHideAsync();
@@ -17,6 +19,8 @@ const RootLayout: FC<never> = () => {
   useEffect(() => {
     loaded && SplashScreen.hideAsync();
   }, [loaded]);
+
+
 
   return (
     <Suspense fallback={<Loading />}>
