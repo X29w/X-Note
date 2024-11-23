@@ -1,7 +1,7 @@
 import { MissionsSQLiteRepository } from "@/database/repository/MissionsSQLiteRepository";
 
 export class MissionsController
-  implements MController.IController<MMission.IMission>
+  implements MController.IController<MMission.Base>
 {
   private readonly missionsRepository: MissionsSQLiteRepository;
 

@@ -1,23 +1,14 @@
 import Card from "@/components/common/Card";
-import SegmentedControl from "@react-native-segmented-control/segmented-control";
-import { useSQLiteContext } from "expo-sqlite";
-import { useEffect, useState, type FC } from "react";
-import {
-  Button,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import AddButton from "./mission-add-button";
-import ConditionalRender from "@/components/config/ConditionalRender";
-import DataView from "@/components/config/DataView";
-import dayjs from "dayjs";
 import CustomButton from "@/components/common/CustomButton";
+import ConditionalRender from "@/components/config/ConditionalRender";
+import SegmentedControl from "@react-native-segmented-control/segmented-control";
+import dayjs from "dayjs";
+import { useState, type FC } from "react";
+import { Text, TextInput, View } from "react-native";
 import CreateCategory from "./create-tab-view";
 import ExitCategory from "./exist-tab-view";
+import AddButton from "./mission-add-button";
+import { categoriesFactory } from "@/database/factory";
 
 interface AddMissionCardProps {
   onFinish: (missions: Omit<MMission.IMission, "id">) => Awaited<void>;
@@ -31,7 +22,7 @@ const AddMissionCard: FC<AddMissionCardProps> = ({ onFinish }) => {
   const [description, setDescription] = useState<string>(""); // 任务描述
   const [categoryId, setCategoryId] = useState<number>(1); // 任务分类ID
   const [dateLimit, setDateLimit] = useState<OneOf<[0, 1, 2]>>(0); // 任务日期限制
-  const db = useSQLiteContext();
+  const categoryController = categoriesFactory();
 
   const expiredTimeMap = new Map<OneOf<[0, 1, 2]>, number>([
     [0, dayjs().endOf("day").valueOf()],
@@ -63,11 +54,8 @@ const AddMissionCard: FC<AddMissionCardProps> = ({ onFinish }) => {
 
   //#region 创建任务分类
   const handleCreateCategory = async (name: string) => {
-    await db.withTransactionAsync(async () => {
-      await db.runAsync("INSERT INTO Categories (name) VALUES (?)", [name]);
-
-      setCurrentTab(0);
-    });
+    await categoryController.create({ name: name.trim() });
+    setCurrentTab(0);
   };
   //#endregion
 

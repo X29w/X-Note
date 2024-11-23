@@ -3,7 +3,6 @@ import SwipeableRow from "@/components/common/SwipeableRow";
 import DataView from "@/components/config/DataView";
 import { EMOJIS } from "@/constant/Emojis";
 import dayjs from "dayjs";
-import { useSQLiteContext } from "expo-sqlite";
 import LottieView from "lottie-react-native";
 import type { FC } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -11,10 +10,9 @@ import { AutoSizeText, ResizeTextMode } from "react-native-auto-size-text";
 import RightActions from "./mission-list-right-actions";
 
 interface MissionsListProps {
-  categories: MCategory.ICategory[];
   missions: MMission.IMission[];
   onDeleteMission: (id: number) => Awaited<void>;
-  onDoneMission: (id: number) => Awaited<void>;
+  onDoneMission: (data: MMission.IMission) => Awaited<void>;
 }
 
 interface MissionMap {
@@ -24,12 +22,9 @@ interface MissionMap {
 
 const MissionsList: FC<MissionsListProps> = ({
   missions = [],
-  categories,
   onDeleteMission,
   onDoneMission,
 }) => {
-  const db = useSQLiteContext();
-
   const cardTypeMap = new Map<
     MMission.IMission["status"],
     (item: MMission.IMission) => MissionMap
@@ -69,7 +64,7 @@ const MissionsList: FC<MissionsListProps> = ({
                 status={item.status}
                 progress={progress}
                 onDeleteMission={() => onDeleteMission(item.id)}
-                onDoneMission={() => onDoneMission(item.id)}
+                onDoneMission={() => onDoneMission(item)}
               />
             )}
           >
@@ -102,7 +97,7 @@ const MissionsList: FC<MissionsListProps> = ({
                     }}
                   >
                     <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-                      {categories.find((c) => c.id === item.category_id)?.name}
+                      {item.category_name}
                     </Text>
                     <LottieView
                       source={{

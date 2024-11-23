@@ -5,9 +5,9 @@ declare module MMission {
     date: number;
     expiredTime: number;
     description: string;
+    category_name: string;
     status: OneOf<["Processing", "Done"]>;
   }
 
   export type IMission = WithId<Base>;
-
 }

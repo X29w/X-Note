@@ -1,4 +1,3 @@
-import { catchError } from "@/utils/common";
 import { DefaultSQLiteRepo } from "./DefaultSQLiteRepository";
 
 export class MissionsSQLiteRepository
@@ -11,14 +10,14 @@ export class MissionsSQLiteRepository
 
   async create(value: MMission.Base): Promise<MMission.IMission> {
     const result = await this.executeInsertQuery(
-      "INSERT INTO Missions (name, category_id, date, description, status, category_id) VALUES (?,?,?,?,?,?)",
+      "INSERT INTO Missions (name, category_id, date, description, status, expiredTime) VALUES (?,?,?,?,?,?)",
       [
         value.name,
         value.category_id,
         value.date,
         value.description,
         value.status,
-        value.category_id,
+        value.expiredTime
       ]
     );
 
@@ -26,44 +25,28 @@ export class MissionsSQLiteRepository
   }
 
   async findAll(): Promise<MMission.IMission[]> {
-    const [error, data] = await catchError(
-      this.executeSelectQuery<MMission.IMission>("SELECT * FROM Missions")
+    return this.executeSelectQuery<MMission.IMission>(
+      "SELECT Missions.*, Categories.name AS category_name FROM Missions JOIN Categories ON Missions.category_id = Categories.id"
     );
-    if (data) return data;
-    else throw error;
   }
 
   async findById(id: number): Promise<MMission.IMission> {
-    const [error, data] = await catchError(
-      this.executeSelectQuery<MMission.IMission>(
-        "SELECT * FROM Missions WHERE id =?",
-        [id]
-      )
+    const data = await this.executeSelectQuery<MMission.IMission>(
+      "SELECT * FROM Missions WHERE id =?",
+      [id]
     );
-    if (data) return data[0];
-    else throw error;
+    return data[0];
   }
 
   async update(value: MMission.IMission): Promise<MMission.IMission> {
-    const [error, data] = await catchError(
-      this.executeUpdateQuery(
-        "UPDATE Missions SET name =?, age =?, specie = ? WHERE id = ?",
-        [
-          value.name,
-          value.category_id,
-          value.date,
-          value.description,
-          value.status,
-          value.category_id,
-        ]
-      )
+    await this.executeUpdateQuery(
+      "UPDATE Missions SET status = 'Done' WHERE id = ?",
+      [value.id]
     );
     return value;
   }
 
   async delete(id: number): Promise<void> {
-    await catchError(
-      this.executeDeleteQuery("DELETE FROM Missions WHERE id = ?", [id])
-    );
+    await this.executeDeleteQuery("DELETE FROM Missions WHERE id = ?", [id]);
   }
 }

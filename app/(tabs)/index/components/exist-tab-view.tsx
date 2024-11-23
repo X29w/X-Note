@@ -1,11 +1,10 @@
 import SwipeableRow from "@/components/common/SwipeableRow";
 import DataView from "@/components/config/DataView";
+import { categoriesFactory } from "@/database/factory";
 import { catchError } from "@/utils/common";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState, type FC } from "react";
 import { Text, TouchableOpacity } from "react-native";
-// import SkeletonContent from "react-native-skeleton-content";
 import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
 
 interface ExitCategoryProps {
@@ -15,27 +14,22 @@ interface ExitCategoryProps {
 const ExitCategory: FC<ExitCategoryProps> = ({ onFinish }) => {
   const [categories, setCategories] = useState<MCategory.ICategory[]>([]); // 任务分类列表
   const [categoryId, setCategoryId] = useState<number>(0);
-  const db = useSQLiteContext();
+  const categoryController = categoriesFactory();
 
   //#region 获得任务分类列表
   const getCategories = async () => {
-    const res = await db.getAllAsync<MCategory.ICategory>(
-      `SELECT * FROM Categories;`
-    );
-    setCategories(res);
-    setCategoryId(res[0].id);
+    const [error, res] = await catchError(categoryController.findAll());
+    error ? console.log(error) : console.log(res);
+    setCategories(res!);
+    setCategoryId(res![0].id);
   };
   //#endregion
 
   //#region 删除任务分类
   const handleDeleteCategory = async (id: number) => {
-    const [error] = await catchError(
-      db.withTransactionAsync(async () => {
-        await db.runAsync("DELETE FROM Categories WHERE id = ?", [id]);
-        await getCategories();
-      })
-    );
-    error && console.log(error);
+    const [error, res] = await catchError(categoryController.delete(id));
+    error ? console.log(error) : console.log(res);
+    await getCategories();
   };
   //#endregion
 
